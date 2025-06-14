@@ -1,0 +1,7 @@
+joblib
+pandas
+nltk
+regex
+sentence-transformers
+accelerate
+autocorrect
