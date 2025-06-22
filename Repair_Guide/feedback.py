@@ -51,7 +51,7 @@ def run_feedback(review_data):
 
         # Generating dynamic path
         query_date = str(request_data["query_id"]).split("-")[-1]
-        file_directory = "./prediction_"+query_date + '.csv'
+        file_directory = "./feedback/prediction_"+query_date + '.csv'
         # tenant specific invoke of run function
         tenant = TenantFeedbackClass()
         tenant.tenant_run(file_directory, request_data)

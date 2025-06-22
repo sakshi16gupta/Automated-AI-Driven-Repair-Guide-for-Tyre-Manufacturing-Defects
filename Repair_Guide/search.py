@@ -1,4 +1,4 @@
-import joblib
+import streamlit as st
 import json
 from typing import Any
 from dataclasses import dataclass,field
@@ -6,6 +6,7 @@ import pandas as pd
 from datetime import datetime
 import uuid
 import os
+import joblib
 from autocorrect import Speller
 import regex as re
 from sentence_transformers import SentenceTransformer
@@ -16,6 +17,7 @@ import nltk
 nltk.download('averaged_perceptron_tagger_eng')
 nltk.download('punkt_tab')
 
+torch.classes.__path__ = []
 # data class for response object of search endpoint
 @dataclass
 class SearchResponse:
@@ -64,21 +66,25 @@ class PredictionData:
 
 def read_prediction_files(prediction_folder):
     feedbacks = []
-    paths = os.listdir(prediction_folder)
-    for filename in paths:
-        print("Reading file: ", filename)
-        feedbacks.append(pd.read_csv(prediction_folder+filename))
-        print(feedbacks)
-    predicted_data = pd.concat(feedbacks)[['Query','Feedback']].dropna().reset_index(drop=True)
-    #featurisation on predicted data
-    remove_words = "feedback|result|response|computer|not|resolved|test"
-    predicted_data_copy = predicted_data.copy()
-    for ind,feedback in zip(predicted_data_copy.index,predicted_data_copy["Feedback"]):
-        if re.findall(remove_words, feedback.lower()) or len(feedback.split(" ")) < 3:
-            predicted_data = predicted_data.drop(ind)
-    for ind in predicted_data.index:
-        predicted_data['Query'][ind] = predicted_data['Query'][ind][2:-2]
-    return predicted_data
+    try:
+        paths = os.listdir(prediction_folder)
+        for filename in paths:
+            print("Reading file: ", filename)
+            feedbacks.append(pd.read_csv(prediction_folder+filename))
+            print(feedbacks)
+        predicted_data = pd.concat(feedbacks)[['Query','Feedback']].dropna().reset_index(drop=True)
+        #featurisation on predicted data
+        remove_words = "feedback|result|response|computer|not|resolved|test"
+        predicted_data_copy = predicted_data.copy()
+        for ind,feedback in zip(predicted_data_copy.index,predicted_data_copy["Feedback"]):
+            if re.findall(remove_words, feedback.lower()) or len(feedback.split(" ")) < 3:
+                predicted_data = predicted_data.drop(ind)
+        for ind in predicted_data.index:
+            predicted_data['Query'][ind] = predicted_data['Query'][ind][2:-2]
+        return predicted_data
+    except Exception as e:
+        print("Error reading prediction files:", e)
+        return pd.DataFrame(columns=["Query","Feedback"])
 
 def result_prediction_file(model,feedback_data,query):
     # feedback query searching
@@ -128,10 +134,10 @@ class TenantSearchClass:
         self.CDL_PREDICTION_FOLDER = "/Prediction/US3"
         self.spell: Any
 
-        model_path="../ModelTraining"
+        model_path="."
 
         # Loading Issue data
-        issue_data_path = "../Preprocessed/processed_dataset.csv"
+        issue_data_path = "processed_dataset.csv"
         self.issue_data = pd.read_csv(issue_data_path)
 
         # Loading Symmetric Semantic Search Model
@@ -140,9 +146,9 @@ class TenantSearchClass:
 
         # Loading Asymmetric Semantic Search Model
         # Quickfix validation for Gen2 migration 
-        # asymmetric_model_path = model_path + "/" + str(cfg["asymmetric_search_model_name"])
-        # self.asymmetric_model = joblib.load(asymmetric_model_path)
-        self.asymmetric_model = SentenceTransformer('sentence-transformers/msmarco-distilbert-base-v4')
+        asymmetric_model_path =  model_path + "/asymmetric_model.pkl"
+        self.asymmetric_model = joblib.load(asymmetric_model_path)
+        # self.asymmetric_model = SentenceTransformer('sentence-transformers/msmarco-distilbert-base-v4',device='cpu')
 
         # Loading Short Descripiton Embedded corpus
         short_description_corpus_path = model_path + "/short_description_corpus_data.pkl"
@@ -343,7 +349,7 @@ def file_operation(process_data,outputlist):
     return new_record.query_id
 
 import traceback
-
+@st.cache_resource
 def run_search(raw_data):
     # Search Response Object
     res = SearchResponse()

@@ -1,16 +1,8 @@
+import os
 import streamlit as st
 import json
-import os
-import sys
-
-# Add the correct path to sys.path
-current_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.abspath(os.path.join(current_dir, os.pardir))
-sys.path.append(parent_dir)
-
-print(sys.path)
-from Inferencing.search import run_search
-from Inferencing.feedback import run_feedback
+from search import run_search
+from feedback import run_feedback
 
 st.set_page_config(page_title="Chatbot with Feedback")
 
@@ -30,12 +22,9 @@ user_input = st.chat_input("Say something...")
 if user_input:
     # Append user message
     st.session_state.messages.append({"role": "user", "content": user_input})
-
-    os.chdir('../Inferencing')
     response = json.loads(run_search(json.dumps({ 
             "data": [user_input]
         })))["fdk_response"]
-    os.chdir('../Frontend')
     st.session_state.messages.append({"role": "assistant", "content": response})
 
 # Display chat and feedback
@@ -63,7 +52,6 @@ for idx, message in enumerate(st.session_state.messages):
         if feedback_text:
             st.success("Thanks for your feedback!")
             # Optionally save feedback here
-            os.chdir('../Inferencing')
             run_feedback(json.dumps({
                     "fdk_request": {
                         "query_id": "8357dff9-1ab1-458b-bc30-bd193ae820d6-20250409",
@@ -76,5 +64,4 @@ for idx, message in enumerate(st.session_state.messages):
                         }
                     }
                 }) )
-            os.chdir('../Frontend')
             st.session_state.feedback_given[idx] = "submitted"
