@@ -200,14 +200,14 @@ class TenantSearchClass:
         top_k = 5
 
         # encoding query
-        query_embeddings = self.symmetric_model.encode(query,convert_to_tensor=True)
+        query_embeddings = self.symmetric_model.encode(query,convert_to_tensor=True).to('cpu')
 
         # Assigning embeddings and topk according to the feature
         if feature == "Cause object":
-            embeddings = self.cause_object_embedded_corpus
+            embeddings = self.cause_object_embedded_corpus.to('cpu')
             top_k = 2
         elif feature == "WO Description":
-            embeddings = self.short_description_embedded_corpus
+            embeddings = self.short_description_embedded_corpus.to('cpu')
             top_k = 15
 
         # if corpus length is less that topk then changing its value

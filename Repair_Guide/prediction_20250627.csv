@@ -1,0 +1,2 @@
+Query_ID,Timestamp,Query,Response,Feedback,Rating
+8fa1ce95-a5ad-4ba5-8324-332a3392038b-20250627,20250627-17:43:30,['membrane got stuck'],"[{'rank': 1, 'description': 'had operator replace membrane', 'score': '0.4847'}, {'rank': 2, 'description': 'cleared membrane transducers', 'score': '0.3763'}, {'rank': 3, 'description': 'transducers were clogged', 'score': '0.2897'}]",,
